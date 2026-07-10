@@ -1,4 +1,7 @@
-import { Card, CardActions, CardContent, CardMedia, Typography } from "@mui/material"
+import { Button,Card, CardActions, CardContent, CardMedia, Typography } from "@mui/material"
+import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
+
 
 type Props = {
   activity: Activity
@@ -6,7 +9,10 @@ type Props = {
   openForm: (id: string) =>void
 }
 
-export default function ActivityDetail({ activity,cancelSelectActivity }: Props) {
+
+export default function ActivityDetail({ activity }: Props) {
+  const navigate = useNavigate();
+  
   return (
     <Card sx={{ borderRadius: 3 }}>
       <CardMedia
@@ -22,8 +28,12 @@ export default function ActivityDetail({ activity,cancelSelectActivity }: Props)
         </Typography>
       </CardContent>
       <CardActions>
-         <button color="primary">Edit</button>
-         <button onClick={cancelSelectActivity} color="inherit">Cancel</button>
+         <Button component={Link} to={`/manage/${activity.id}`} color="primary">
+           Edit
+         </Button>
+         <Button onClick={() => navigate('/activities')} color="inherit">
+           Cancel
+         </Button>
       </CardActions>
     </Card>
   )
