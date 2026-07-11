@@ -8,6 +8,7 @@ using Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Http;
 using FluentValidation;
 using Application.Activities.Validators;
 using Application.Activities.Commands;
@@ -44,12 +45,21 @@ builder.Services.AddMediatR(x =>
         builder.Services.AddTransient<ExceptionMiddleware>();
 
         builder.Services.AddOpenApi();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<Application.Interfaces.IUserAccessor, API.Services.UserAccessor>();
         builder.Services.AddIdentityApiEndpoints<User>(opt =>
         {
             opt.User.RequireUniqueEmail = true;
         })
         .AddRoles<IdentityRole>()
         .AddEntityFrameworkStores<AppDbContext>();
+
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SameSite = SameSiteMode.None;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        });
         var app = builder.Build();
 
         app.UseMiddleware<ExceptionMiddleware>();

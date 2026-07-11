@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import Place from '@mui/icons-material/Place';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 type Props = {
   activity: Activity;

@@ -1,22 +1,6 @@
 import { Group } from "@mui/icons-material";
 import { Paper, Typography, Box, Button } from "@mui/material";
-import { createBrowserRouter, Link } from "react-router";
-import ActivitiesDashboard from "../../features/activities/Dashboard/ActivityDashboard";
-import ActivitiesForm from "../../features/activities/form/ActivityForm";
-import App from "../../app/layout/App";
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <App />,
-        children: [
-            { path: "", element: <HomePage /> }, 
-            { path: "activities", element: <ActivitiesDashboard /> },
-            { path: "createActivity", element: <ActivitiesForm /> }
-          ]
-    }
-]);
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
   return (

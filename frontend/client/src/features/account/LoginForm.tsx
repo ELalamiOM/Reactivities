@@ -3,9 +3,11 @@ import { LockOpen } from "@mui/icons-material";
 import React, { useState } from "react";
 import { z } from "zod";
 import { useAccount } from "../../hooks/useAccount";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const { loginUser } = useAccount();
+  const navigate = useNavigate();
 
   const loginSchema = z.object({
     email: z.string().min(1, "Email is required").email("Invalid email"),
@@ -19,11 +21,21 @@ export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validate = (fieldValues: Partial<LoginSchema> = values) => {
-  
-      loginSchema.parse(fieldValues);
-      setErrors({});
-      return true;
-
+    const result = loginSchema.safeParse(fieldValues);
+    
+    if (!result.success) {
+      const newErrors: Partial<Record<keyof LoginSchema, string>> = {};
+      result.error.issues.forEach((err) => {
+        if (err.path.length > 0) {
+          newErrors[err.path[0] as keyof LoginSchema] = err.message;
+        }
+      });
+      setErrors(newErrors);
+      return false;
+    }
+    
+    setErrors({});
+    return true;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,6 +51,7 @@ export default function LoginForm() {
     setIsSubmitting(true);
     try {
       await loginUser.mutateAsync(values);
+      navigate('/activities');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,6 +108,9 @@ export default function LoginForm() {
       <Button type="submit" disabled={isSubmitting} variant="contained" size="large">
         Login
       </Button>
+      <Typography sx={{ textAlign: "center" }}>
+        Forgot password? <Link to="/forgot-password">Reset here</Link>
+      </Typography>
 </Paper>
   )
 }

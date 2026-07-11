@@ -5,10 +5,14 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import GroupIcon from '@mui/icons-material/Group';
 import { Button  } from '@mui/material';
-import { NavLink } from 'react-router';
+import { NavLink } from 'react-router-dom';
+import { useAccount } from '../../hooks/useAccount';
+import UserMenu from './UserMenu';
 
 
 export default function NavBar() {
+   const { currentUser } = useAccount();
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
@@ -62,11 +66,16 @@ export default function NavBar() {
     </Button >
 
      </Box>
-     <Button  sx={{
-        color: "#eeeeee"
-      }}>
-         User menu
-     </Button>
+     <Box sx={{ display: 'flex', alignItems: 'center' }}>
+           {currentUser ? (
+             <UserMenu />
+           ) : (
+            <>
+             <Button  component={NavLink} to="/login">Login</Button>
+             <Button  component={NavLink} to="/register">Register</Button>
+            </>
+           )}
+        </Box>
            </Toolbar>
         </Container>
       </AppBar>

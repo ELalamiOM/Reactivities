@@ -13,6 +13,7 @@ namespace API.Controllers
 {
     public class AccountController(SignInManager<User> signInManager) : BaseApiController
     {
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<ActionResult> RegisterUser(RegisterDto registerDto)
         {

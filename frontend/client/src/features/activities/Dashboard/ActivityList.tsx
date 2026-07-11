@@ -1,20 +1,33 @@
 import { Box, Typography } from "@mui/material";
-import { useActivities } from "../../../hooks/useActivities";
+import ActivityCard from "./ActivityCard";
 
-export default function ActivityList() {
-  const [activities, isPending] = useActivities();
+type Props = {
+  activities: Activity[];
+  isPending?: boolean;
+};
 
-  if (!activities || isPending) {
+export default function ActivityList({ activities, isPending = false }: Props) {
+  if (isPending) {
     return (
       <Typography className="app" style={{ color: "red" }}>
-        Reactivities
+        Loading activities...
+      </Typography>
+    );
+  }
+
+  if (activities.length === 0) {
+    return (
+      <Typography sx={{ color: "text.secondary" }}>
+        No activities found for this filter.
       </Typography>
     );
   }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-     
+      {activities.map((activity) => (
+        <ActivityCard key={activity.id} activity={activity} />
+      ))}
     </Box>
-  )
+  );
 }

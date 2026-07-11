@@ -1,4 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
+import agent from "../api/agent";
 
 export function useActivities() {
-  return [[], false] as const;
+  const { data = [], isPending } = useQuery({
+    queryKey: ["activities"],
+    queryFn: async () => {
+      const response = await agent.get<Activity[]>("/api/activities");
+      return response.data;
+    },
+  });
+
+  return [data, isPending] as const;
 }
