@@ -16,6 +16,7 @@ using FluentValidation;
 using Application.Activities.Validators;
 using Application.Activities.Commands;
 using Reactivity.Api.Middleware;
+using Infrastructure.Photos;
 
 public partial class Program
 {
@@ -69,6 +70,8 @@ builder.Services.AddMediatR(x =>
         builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfiles).Assembly);
         builder.Services.AddValidatorsFromAssemblyContaining<CreateActivityValidator>();
         builder.Services.AddTransient<ExceptionMiddleware>();
+        
+        builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
         builder.Services.AddOpenApi();
         builder.Services.AddHttpContextAccessor();
