@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'react-toastify';
 import { router } from '../app/router/Routes';
 
@@ -8,37 +9,90 @@ const sleep = (delay: number) => {
   });
 };
 
-// Create axios instance with cookie support
+const TOKEN_STORAGE_KEY = 'jwt';
+
+export const getToken = () => localStorage.getItem(TOKEN_STORAGE_KEY);
+
+export const setToken = (token: string) => {
+  localStorage.setItem(TOKEN_STORAGE_KEY, token);
+};
+
+export const clearToken = () => {
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+};
+
 const agent = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://localhost:5001',
-  withCredentials: true, // Enable cookies
+  withCredentials: true,
 });
 
-// Request interceptor
 agent.interceptors.request.use((config) => {
-  // Add any auth headers if needed
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
   return config;
 });
 
-// Response interceptor for handling errors
+let refreshRequest: Promise<User | null> | null = null;
+
+const refreshAccessToken = async () => {
+  if (!refreshRequest) {
+    refreshRequest = agent
+      .post<User>('/api/account/refresh-token')
+      .then((response) => {
+        setToken(response.data.token);
+        return response.data;
+      })
+      .catch(() => {
+        clearToken();
+        return null;
+      })
+      .finally(() => {
+        refreshRequest = null;
+      });
+  }
+
+  return refreshRequest;
+};
+
+type RetryRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
 agent.interceptors.response.use(
   async (response) => {
     await sleep(1000);
     return response;
   },
-  (error) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryRequestConfig | undefined;
     const { data, status } = error.response || {};
+    const isRefreshCall = originalRequest?.url?.includes('/api/account/refresh-token');
+    const isAuthCall =
+      originalRequest?.url?.includes('/api/account/login') ||
+      originalRequest?.url?.includes('/api/account/register');
+
+    if (status === 401 && originalRequest && !originalRequest._retry && !isRefreshCall && !isAuthCall) {
+      originalRequest._retry = true;
+      const refreshedUser = await refreshAccessToken();
+
+      if (refreshedUser) {
+        originalRequest.headers.Authorization = `Bearer ${refreshedUser.token}`;
+        return agent(originalRequest);
+      }
+    }
 
     switch (status) {
       case 400:
-        if (data.errors) {
-          const modalStateErrors = [];
-          for (const key in data.errors) {
-            if (data.errors[key]) {
-              modalStateErrors.push(data.errors[key]);
+        if ((data as { errors?: Record<string, string[]> }).errors) {
+          const modelStateErrors = [];
+          const errors = (data as { errors: Record<string, string[]> }).errors;
+          for (const key in errors) {
+            if (errors[key]) {
+              modelStateErrors.push(errors[key]);
             }
           }
-          throw modalStateErrors.flat();
+          throw modelStateErrors.flat();
         }
         toast.error('Bad request');
         break;
@@ -62,75 +116,20 @@ agent.interceptors.response.use(
   }
 );
 
-/**
- * Captures login submission and handles cookie generation
- * @param email - User email
- * @param password - User password
- * @returns Login response with user data
- */
-export const loginWithCookies = async (
-  email: string,
-  password: string
-) => {
-  try {
-    console.log('[Agent] Initiating login capture for:', email);
-    console.log('[Agent] Base URL:', agent.defaults.baseURL);
+export const loginWithCookies = async (email: string, password: string) => {
+  const payload = { email, password };
+  const response = await agent.post<User>('/api/account/login', payload);
 
-    // Send login request - the route expects JSON body
-    const payload = { email, password };
-    console.log('[Agent] Sending payload:', payload);
+  setToken(response.data.token);
+  toast.success('Login successful');
 
-    const response = await agent.post('/api/login?useCookies=true', payload);
-
-    console.log('[Agent] Login successful');
-    console.log('[Agent] Response status:', response.status);
-    console.log('[Agent] Response data:', response.data);
-    console.log('[Agent] Response headers:', response.headers);
-
-    // Capture and log cookies
-    const cookies = document.cookie;
-    console.log('[Agent] Current cookies:', cookies);
-
-    if (response.status === 200) {
-      toast.success('Login successful - session established');
-    }
-
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('[Agent] Full error object:', error);
-      console.error('[Agent] Error message:', error.message);
-      
-      if (error.response) {
-        console.error('[Agent] Error response data:', error.response.data);
-        console.error('[Agent] Error response status:', error.response.status);
-        console.error('[Agent] Error response headers:', error.response.headers);
-        toast.error(`Login failed: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
-      } else if (error.request) {
-        console.error('[Agent] No response received - Error request:', error.request);
-        toast.error('No response from server');
-      } else {
-        console.error('[Agent] Error message:', error.message);
-        toast.error(error.message);
-      }
-    } else {
-      console.error('[Agent] Full error object:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('[Agent] Error message:', errorMessage);
-      toast.error(errorMessage);
-    }
-    
-    throw error;
-  }
+  return response.data;
 };
 
-export const registerUser = async (
-  email: string,
-  displayName: string,
-  password: string
-) => {
+export const registerUser = async (email: string, displayName: string, password: string) => {
   const payload = { email, displayName, password };
-  const response = await agent.post('/api/account/register', payload);
+  const response = await agent.post<User>('/api/account/register', payload);
+  setToken(response.data.token);
   return response.data;
 };
 
@@ -140,75 +139,39 @@ export const requestPasswordReset = async (email: string) => {
   return response.data;
 };
 
-/**
- * Validates if current session is active
- * @returns Boolean indicating if session is valid
- */
 export const validateSession = async (): Promise<boolean> => {
-  try {
-    const response = await agent.get('/api/account/user-info');
-    return response.status === 200;
-  } catch (error) {
-    console.log('[Agent] Session validation failed:', error);
-    return false;
-  }
+  const user = await getCurrentUser();
+  return !!user;
 };
 
-/**
- * Logs out user and clears cookies
- */
 export const logout = async () => {
   try {
-    console.log('[Agent] Logging out - clearing cookies');
     await agent.post('/api/account/logout');
-    
-    // Clear cookies by setting empty values
-    document.cookie.split(';').forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, '')
-        .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
-    });
-
-    toast.success('Logged out successfully');
-  } catch (error) {
-    console.error('[Agent] Logout failed:', error);
-    toast.error('Logout failed');
+  } finally {
+    clearToken();
   }
+
+  toast.success('Logged out successfully');
 };
 
-/**
- * Gets current session information
- */
-export const getSessionInfo = async () => {
+export const getCurrentUser = async () => {
+  if (!getToken()) return null;
+
   try {
-    const response = await agent.get('/api/account/user-info');
+    const response = await agent.get<User>('/api/account/user-info');
+    setToken(response.data.token);
     return response.data;
   } catch (error) {
-    console.error('[Agent] Failed to get session info:', error);
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      clearToken();
+    }
+
     return null;
   }
 };
 
-/**
- * Captures cookie information for debugging
- */
-export const captureCookieInfo = () => {
-  const cookies = document.cookie;
-  const cookieArray = cookies.split(';').map((c) => c.trim());
-
-  console.log('[Agent] Cookie Info:');
-  console.log('[Agent] Total cookies:', cookieArray.length);
-  
-  cookieArray.forEach((cookie, index) => {
-    const [name] = cookie.split('=');
-    console.log(`[Agent] Cookie ${index + 1}: ${name}`);
-  });
-
-  return {
-    totalCookies: cookieArray.length,
-    cookieNames: cookieArray.map((c) => c.split('=')[0]),
-    rawCookies: cookies,
-  };
+export const getSessionInfo = async () => {
+  return await getCurrentUser();
 };
 
 export default agent;

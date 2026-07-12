@@ -26,4 +26,5 @@ type User = {
     email: string
     displayName: string
     imageUrl?: string
+    token: string
 }

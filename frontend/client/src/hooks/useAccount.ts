@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ForgotPasswordSchema } from "../schemas/forgotPasswordSchema";
 import type { LoginSchema } from "../schemas/loginSchema";
 import type { RegisterSchema } from "../schemas/registerSchema";
-import agent, {
+import {
+  getCurrentUser,
   getSessionInfo,
   loginWithCookies,
   logout,
@@ -18,12 +19,8 @@ export const useAccount = () => {
     mutationFn: async (creds: LoginSchema) => {
       return await loginWithCookies(creds.email, creds.password);
     },
-    onSuccess: () => {
-      console.log('[useAccount] Login successful');
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-    },
-    onError: (error) => {
-      console.error('[useAccount] Login error:', error);
+    onSuccess: (user) => {
+      queryClient.setQueryData(['user'], user);
     }
   });
 
@@ -50,7 +47,7 @@ export const useAccount = () => {
       return await logout();
     },
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ['user'] });
+      queryClient.setQueryData(['user'], null);
     }
   });
 
@@ -63,9 +60,7 @@ export const useAccount = () => {
   const { data: currentUser } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
-      const response = await agent.get('/api/account/user-info');
-      if (response.status === 204) return null;
-      return response.data;
+      return await getCurrentUser();
     },
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes

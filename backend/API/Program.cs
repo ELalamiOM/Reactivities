@@ -1,14 +1,17 @@
 using Application.Activities.Queries;
 using Application.Core;
+using API.Services;
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Application;
 using Domain;
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using FluentValidation;
 using Application.Activities.Validators;
 using Application.Activities.Commands;
@@ -32,6 +35,29 @@ public partial class Program
             opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
         });
         builder.Services.AddCors();
+        var jwtKey = builder.Configuration["JwtSettings:Key"]
+            ?? throw new InvalidOperationException("JwtSettings:Key is not configured");
+        var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]
+            ?? throw new InvalidOperationException("JwtSettings:Issuer is not configured");
+        var jwtAudience = builder.Configuration["JwtSettings:Audience"]
+            ?? throw new InvalidOperationException("JwtSettings:Audience is not configured");
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtIssuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtAudience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(1)
+                };
+            });
+        builder.Services.AddAuthorization();
       
 builder.Services.AddMediatR(x =>
 {
@@ -47,19 +73,15 @@ builder.Services.AddMediatR(x =>
         builder.Services.AddOpenApi();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<Application.Interfaces.IUserAccessor, API.Services.UserAccessor>();
-        builder.Services.AddIdentityApiEndpoints<User>(opt =>
+        builder.Services.AddScoped<ITokenService, TokenService>();
+        builder.Services.AddIdentityCore<User>(opt =>
         {
             opt.User.RequireUniqueEmail = true;
         })
         .AddRoles<IdentityRole>()
-        .AddEntityFrameworkStores<AppDbContext>();
-
-        builder.Services.ConfigureApplicationCookie(options =>
-        {
-            options.Cookie.HttpOnly = true;
-            options.Cookie.SameSite = SameSiteMode.None;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        });
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddSignInManager<SignInManager<User>>()
+        .AddDefaultTokenProviders();
         var app = builder.Build();
 
         app.UseMiddleware<ExceptionMiddleware>();
@@ -73,9 +95,7 @@ builder.Services.AddMediatR(x =>
 
         app.MapOpenApi();
         app.MapScalarApiReference();
-
         app.MapControllers();
-        app.MapGroup("api").MapIdentityApi<User>(); // api/login
 
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
