@@ -1,4 +1,7 @@
-﻿namespace Domain;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Domain.Entities;
 
 public class Activity
 {

@@ -1,7 +1,7 @@
 using Application.Core;
 using Application.Interfaces;
-using Domain;
-using Infrastructure;
+using Domain.Entities;
+using Infrastructure.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +19,7 @@ public class UpdateAttendance
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var activity = await context.Activites
+            var activity = await context.Activities
                 .Include(x => x.Attendees)
                 .ThenInclude(x => x.User)
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);

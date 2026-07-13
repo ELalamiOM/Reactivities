@@ -1,28 +1,25 @@
 import { Box, Button, Paper, Typography, TextField } from "@mui/material";
 import { LockOpen } from "@mui/icons-material";
 import React, { useState } from "react";
-import { z } from "zod";
 import { useAccount } from "../../hooks/useAccount";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { loginSchema, type LoginSchema } from "../../schemas/loginSchema";
 
 export default function LoginForm() {
   const { loginUser } = useAccount();
   const navigate = useNavigate();
 
-  const loginSchema = z.object({
-    email: z.string().min(1, "Email is required").email("Invalid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+  const [values, setValues] = useState<LoginSchema>({
+    email: "",
+    password: "",
   });
-
-  type LoginSchema = z.infer<typeof loginSchema>;
-
-  const [values, setValues] = useState<LoginSchema>({ email: "", password: "" });
-  const [errors, setErrors] = useState<Partial<Record<keyof LoginSchema, string>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof LoginSchema, string>>
+  >({});
 
   const validate = (fieldValues: Partial<LoginSchema> = values) => {
     const result = loginSchema.safeParse(fieldValues);
-    
+
     if (!result.success) {
       const newErrors: Partial<Record<keyof LoginSchema, string>> = {};
       result.error.issues.forEach((err) => {
@@ -33,7 +30,7 @@ export default function LoginForm() {
       setErrors(newErrors);
       return false;
     }
-    
+
     setErrors({});
     return true;
   };
@@ -45,44 +42,39 @@ export default function LoginForm() {
     validate(next);
   };
 
-  const onSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!validate()) return;
-    setIsSubmitting(true);
-    try {
-      await loginUser.mutateAsync(values);
-      navigate('/activities');
-    } finally {
-      setIsSubmitting(false);
-    }
+    await loginUser.mutateAsync(values);
+    navigate("/activities");
   };
 
   return (
     <Paper
-  component="form"
-  onSubmit={(onSubmit)}
-  sx={{
-    display: "flex",
-    flexDirection: "column",
-    p: 3,
-    gap: 3,
-    maxWidth: "md",
-    mx: "auto",
-    borderRadius: 3,
-  }}
->
- <Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 3,
-    color: "secondary.main"
-  }}
->
-  <LockOpen fontSize="large" />
-  <Typography variant="h4">Sign in</Typography>
-</Box>
+      component="form"
+      onSubmit={onSubmit}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        p: 3,
+        gap: 3,
+        maxWidth: "md",
+        mx: "auto",
+        borderRadius: 3,
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 3,
+          color: "secondary.main",
+        }}
+      >
+        <LockOpen fontSize="large" />
+        <Typography variant="h4">Sign in</Typography>
+      </Box>
 
       <TextField
         name="email"
@@ -105,12 +97,14 @@ export default function LoginForm() {
         fullWidth
       />
 
-      <Button type="submit" disabled={isSubmitting} variant="contained" size="large">
+      <Button
+        type="submit"
+        disabled={loginUser.isPending}
+        variant="contained"
+        size="large"
+      >
         Login
       </Button>
-      <Typography sx={{ textAlign: "center" }}>
-        Forgot password? <Link to="/forgot-password">Reset here</Link>
-      </Typography>
-</Paper>
-  )
+    </Paper>
+  );
 }

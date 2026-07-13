@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Application.Interfaces;
-using Domain;
-using Infrastructure;
+using Domain.Entities;
+using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Services;

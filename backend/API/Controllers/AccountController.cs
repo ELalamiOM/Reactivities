@@ -1,48 +1,28 @@
-using API.DTOs;
-using API.Services;
-using Domain;
+using Application.Account.Commands;
+using Application.Account.Common;
+using Application.Account.DTOs;
+using Application.Account.Queries;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
-    public class AccountController(SignInManager<User> signInManager, ITokenService tokenService) : BaseApiController
+    public class AccountController : BaseApiController
     {
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> RegisterUser(RegisterDto registerDto)
         {
-            var user = new User
-            {
-                UserName = registerDto.Email,
-                Email = registerDto.Email,
-                DisplayName = registerDto.DisplayName
-            };
-
-            var result = await signInManager.UserManager.CreateAsync(user,registerDto.Password);
-
-            if(result.Succeeded) return Ok(await CreateUserObject(user));
-
-            foreach( var error in result.Errors)
-            {
-                ModelState.AddModelError(error.Code,error.Description);
-            }
-            return ValidationProblem();
+            var result = await Mediator.Send(new RegisterUser.Command { RegisterDto = registerDto });
+            return HandleAuthResult(result);
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
-            var user = await signInManager.UserManager.FindByEmailAsync(loginDto.Email);
-            if (user == null) return Unauthorized("Invalid email or password");
-
-            var result = await signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
-            if (!result.Succeeded) return Unauthorized("Invalid email or password");
-
-            return Ok(await CreateUserObject(user));
+            var result = await Mediator.Send(new LoginUser.Command { LoginDto = loginDto });
+            return HandleAuthResult(result);
         }
 
         [AllowAnonymous]
@@ -50,45 +30,38 @@ namespace API.Controllers
         public async Task<ActionResult<UserDto>> RefreshToken()
         {
             if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+            {
                 return Unauthorized("Refresh token is missing");
+            }
 
-            var user = await signInManager.UserManager.Users
-                .FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
-
-            if (user == null || user.RefreshTokenExpiresAt <= DateTime.UtcNow)
-                return Unauthorized("Refresh token is invalid or expired");
-
-            return Ok(await CreateUserObject(user));
+            var result = await Mediator.Send(new RefreshUserToken.Command { RefreshToken = refreshToken });
+            return HandleAuthResult(result);
         }
 
         [AllowAnonymous]
         [HttpGet("user-info")]
         public async Task<ActionResult<UserDto>> GetUserInfo()
         {
-             if(User.Identity?.IsAuthenticated == false) return NoContent();
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                return NoContent();
+            }
 
-             var user = await signInManager.UserManager.GetUserAsync(User);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
 
-             if(user == null) return Unauthorized();
-
-             return Ok(await CreateUserObject(user));
+            var result = await Mediator.Send(new GetCurrentUserInfo.Query { UserId = userId });
+            return HandleAuthResult(result);
         }
         
         [HttpPost("logout")]
         public async Task<ActionResult> Logout()
         {
-            if (Request.Cookies.TryGetValue("refreshToken", out var refreshToken) && !string.IsNullOrWhiteSpace(refreshToken))
-            {
-                var user = await signInManager.UserManager.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
-                if (user != null)
-                {
-                    user.RefreshToken = null;
-                    user.RefreshTokenExpiresAt = DateTime.UtcNow;
-                    var updateResult = await signInManager.UserManager.UpdateAsync(user);
-                    if (!updateResult.Succeeded)
-                        return BadRequest("Could not revoke refresh token");
-                }
-            }
+            Request.Cookies.TryGetValue("refreshToken", out var refreshToken);
+            var result = await Mediator.Send(new LogoutUser.Command { RefreshToken = refreshToken });
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
 
             Response.Cookies.Delete("refreshToken", new CookieOptions
             {
@@ -101,32 +74,35 @@ namespace API.Controllers
             return NoContent();
         }
 
-        private async Task<UserDto> CreateUserObject(User user)
+        [AllowAnonymous]
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
         {
-            user.RefreshToken = tokenService.GenerateRefreshToken();
-            user.RefreshTokenExpiresAt = tokenService.GetRefreshTokenExpiryDate();
+            var result = await Mediator.Send(new ForgotPassword.Command { ForgotPasswordDto = forgotPasswordDto });
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
+            return Ok();
+        }
 
-            var updateResult = await signInManager.UserManager.UpdateAsync(user);
-            if (!updateResult.Succeeded)
-                throw new InvalidOperationException("Could not persist refresh token for the user");
+        private ActionResult<UserDto> HandleAuthResult(Application.Core.Result<AccountAuthResult> result)
+        {
+            if (!result.IsSuccess && result.Code == 401)
+                return Unauthorized(result.Error);
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
+            if (result.Value == null)
+                return BadRequest("Invalid authentication result");
 
-            Response.Cookies.Append("refreshToken", user.RefreshToken, new CookieOptions
+            Response.Cookies.Append("refreshToken", result.Value.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = user.RefreshTokenExpiresAt,
+                Expires = result.Value.RefreshTokenExpiresAt,
                 Path = "/"
             });
 
-            return new UserDto
-            {
-                Id = user.Id,
-                DisplayName = user.DisplayName ?? string.Empty,
-                Email = user.Email ?? string.Empty,
-                ImageUrl = user.ImageUrl,
-                Token = tokenService.CreateToken(user)
-            };
+            return Ok(result.Value.User);
         }
     }
 }

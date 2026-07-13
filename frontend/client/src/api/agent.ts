@@ -3,12 +3,6 @@ import type { InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'react-toastify';
 import { router } from '../app/router/Routes';
 
-const sleep = (delay: number) => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, delay);
-  });
-};
-
 const TOKEN_STORAGE_KEY = 'jwt';
 
 export const getToken = () => localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -22,7 +16,7 @@ export const clearToken = () => {
 };
 
 const agent = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://localhost:5001',
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
 });
 
@@ -31,7 +25,6 @@ agent.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
   return config;
 });
 
@@ -53,17 +46,13 @@ const refreshAccessToken = async () => {
         refreshRequest = null;
       });
   }
-
   return refreshRequest;
 };
 
 type RetryRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 agent.interceptors.response.use(
-  async (response) => {
-    await sleep(1000);
-    return response;
-  },
+  (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryRequestConfig | undefined;
     const { data, status } = error.response || {};
@@ -85,14 +74,14 @@ agent.interceptors.response.use(
     switch (status) {
       case 400:
         if ((data as { errors?: Record<string, string[]> }).errors) {
-          const modelStateErrors = [];
+          const modelStateErrors: string[] = [];
           const errors = (data as { errors: Record<string, string[]> }).errors;
           for (const key in errors) {
             if (errors[key]) {
-              modelStateErrors.push(errors[key]);
+              modelStateErrors.push(...errors[key]);
             }
           }
-          throw modelStateErrors.flat();
+          throw modelStateErrors;
         }
         toast.error('Bad request');
         break;
@@ -103,7 +92,7 @@ agent.interceptors.response.use(
         toast.error('Forbidden');
         break;
       case 404:
-        toast.error('Not found');
+        router.navigate('/not-found');
         break;
       case 500:
         router.navigate('/server-error');
@@ -119,10 +108,8 @@ agent.interceptors.response.use(
 export const loginWithCookies = async (email: string, password: string) => {
   const payload = { email, password };
   const response = await agent.post<User>('/api/account/login', payload);
-
   setToken(response.data.token);
   toast.success('Login successful');
-
   return response.data;
 };
 
@@ -133,24 +120,12 @@ export const registerUser = async (email: string, displayName: string, password:
   return response.data;
 };
 
-export const requestPasswordReset = async (email: string) => {
-  const payload = { email };
-  const response = await agent.post('/api/forgotPassword', payload);
-  return response.data;
-};
-
-export const validateSession = async (): Promise<boolean> => {
-  const user = await getCurrentUser();
-  return !!user;
-};
-
 export const logout = async () => {
   try {
     await agent.post('/api/account/logout');
   } finally {
     clearToken();
   }
-
   toast.success('Logged out successfully');
 };
 
@@ -165,13 +140,12 @@ export const getCurrentUser = async () => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       clearToken();
     }
-
     return null;
   }
 };
 
-export const getSessionInfo = async () => {
-  return await getCurrentUser();
+export const forgotPassword = async (email: string) => {
+  await agent.post('/api/account/forgot-password', { email });
 };
 
 export default agent;

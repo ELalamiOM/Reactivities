@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import ActivityCard from "./ActivityCard";
 
 type Props = {
@@ -9,9 +9,16 @@ type Props = {
 export default function ActivityList({ activities, isPending = false }: Props) {
   if (isPending) {
     return (
-      <Typography className="app" style={{ color: "red" }}>
-        Loading activities...
-      </Typography>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {[1, 2, 3].map((i) => (
+          <Skeleton
+            key={i}
+            variant="rounded"
+            height={200}
+            sx={{ borderRadius: 3 }}
+          />
+        ))}
+      </Box>
     );
   }
 
@@ -24,7 +31,7 @@ export default function ActivityList({ activities, isPending = false }: Props) {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {activities.map((activity) => (
         <ActivityCard key={activity.id} activity={activity} />
       ))}

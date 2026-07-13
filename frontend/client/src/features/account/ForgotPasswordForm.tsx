@@ -2,11 +2,11 @@ import { LockOpen } from "@mui/icons-material";
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAccount } from "../../hooks/useAccount";
 import {
   forgotPasswordSchema,
   type ForgotPasswordSchema,
 } from "../../schemas/forgotPasswordSchema";
+import { useAccount } from "../../hooks/useAccount";
 
 export default function ForgotPasswordForm() {
   const { forgotPassword } = useAccount();
@@ -14,7 +14,6 @@ export default function ForgotPasswordForm() {
   const [errors, setErrors] = useState<
     Partial<Record<keyof ForgotPasswordSchema, string>>
   >({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validate = (fieldValues: Partial<ForgotPasswordSchema> = values) => {
     const result = forgotPasswordSchema.safeParse(fieldValues);
@@ -44,12 +43,7 @@ export default function ForgotPasswordForm() {
   const onSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!validate()) return;
-    setIsSubmitting(true);
-    try {
-      await forgotPassword.mutateAsync(values);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await forgotPassword.mutateAsync(values);
   };
 
   return (
@@ -89,7 +83,7 @@ export default function ForgotPasswordForm() {
         fullWidth
       />
 
-      <Button type="submit" disabled={isSubmitting} variant="contained" size="large">
+      <Button type="submit" disabled={forgotPassword.isPending} variant="contained" size="large">
         Request password reset link
       </Button>
 

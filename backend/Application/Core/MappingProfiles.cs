@@ -1,8 +1,6 @@
-using System;
-using System.Linq;
 using AutoMapper;
 using Application.Activities.DTOs;
-using Domain;
+using Domain.Entities;
 
 namespace Application.Core;
 
@@ -10,8 +8,8 @@ public class MappingProfiles : Profile
 {
     public MappingProfiles()
     {
-        CreateMap<Activity,Activity>();
-        CreateMap<CreateActivityDto,Activity>();
+        CreateMap<CreateActivityDto, Activity>();
+        CreateMap<EditActivityDto, Activity>();
 
         CreateMap<Activity, ActivityDto>()
             .ForMember(d => d.HostId, o => o.MapFrom(s =>

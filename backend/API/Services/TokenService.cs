@@ -2,8 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
-using Domain;
+using Domain.Entities;
 using Microsoft.IdentityModel.Tokens;
+using Application.Interfaces;
 
 namespace API.Services;
 

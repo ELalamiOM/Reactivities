@@ -6,13 +6,14 @@ import {
   Avatar,
   Box,
   Button,
+  CircularProgress,
   Grid,
   Paper,
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import agent from "../../../api/agent";
 import { useAccount } from "../../../hooks/useAccount";
 
@@ -43,8 +44,22 @@ export default function ActivityDetailPage() {
     },
   });
 
+  const deleteActivity = useMutation({
+    mutationFn: async () => {
+      await agent.delete(`/api/activities/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      navigate("/activities");
+    },
+  });
+
   if (isPending) {
-    return <Typography>Loading activity...</Typography>;
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   if (!activity) {
@@ -62,8 +77,7 @@ export default function ActivityDetailPage() {
             sx={{
               position: "relative",
               minHeight: 380,
-              backgroundImage:
-                "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.15)), url('/images/categoryImages/culture.png')",
+              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.15)), url('/images/categoryImages/${activity.category.toLowerCase()}.png')`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               p: 3,
@@ -75,35 +89,98 @@ export default function ActivityDetailPage() {
               <Typography variant="h3" sx={{ fontWeight: "bold" }}>
                 {activity.title}
               </Typography>
-              <Typography variant="h6">{activity.date}</Typography>
+              <Typography variant="h6">
+                {new Date(activity.date).toLocaleDateString()}
+              </Typography>
               <Typography variant="h6">
                 Hosted by <b>{activity.hostDisplayName}</b>
               </Typography>
             </Box>
-            {!isHost && (
-              <Button
-                variant="contained"
-                color={isGoing ? "warning" : "primary"}
-                disabled={!currentUser || updateAttendance.isPending}
-                onClick={() => updateAttendance.mutate()}
-                sx={{ position: "absolute", right: 16, bottom: 16 }}
-              >
-                {isGoing ? "Cancel attendance" : "Join Activity"}
-              </Button>
-            )}
+            <Box
+              sx={{
+                position: "absolute",
+                right: 16,
+                bottom: 16,
+                display: "flex",
+                gap: 1,
+              }}
+            >
+              {isHost ? (
+                <>
+                  <Button
+                    component={Link}
+                    to={`/manage/${activity.id}`}
+                    variant="contained"
+                    color="warning"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    disabled={deleteActivity.isPending}
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "Are you sure you want to delete this activity?",
+                        )
+                      ) {
+                        deleteActivity.mutate();
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="contained"
+                  color={isGoing ? "warning" : "primary"}
+                  disabled={!currentUser || updateAttendance.isPending}
+                  onClick={() => updateAttendance.mutate()}
+                >
+                  {isGoing ? "Cancel attendance" : "Join Activity"}
+                </Button>
+              )}
+            </Box>
           </Box>
         </Paper>
 
         <Paper sx={{ mt: 2, borderRadius: 2, overflow: "hidden" }}>
-          <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", gap: 2 }}>
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              display: "flex",
+              gap: 2,
+            }}
+          >
             <InfoIcon color="primary" />
             <Typography>{activity.description}</Typography>
           </Box>
-          <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", gap: 2 }}>
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              display: "flex",
+              gap: 2,
+            }}
+          >
             <CalendarMonthIcon color="primary" />
-            <Typography>{activity.date}</Typography>
+            <Typography>{new Date(activity.date).toLocaleString()}</Typography>
           </Box>
-          <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2 }}>
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
             <PlaceIcon color="primary" />
             <Typography sx={{ flex: 1 }}>
               {activity.venue}, {activity.city}
@@ -112,7 +189,7 @@ export default function ActivityDetailPage() {
               {showMap ? "Hide Map" : "Show Map"}
             </Button>
           </Box>
-          {showMap && (
+          {showMap && activity.latitude !== 0 && activity.longitude !== 0 && (
             <Box sx={{ height: 280 }}>
               <iframe
                 title="activity-location"
@@ -127,19 +204,31 @@ export default function ActivityDetailPage() {
         </Paper>
 
         <Box sx={{ mt: 2 }}>
-          <Button onClick={() => navigate("/activities")}>Back to activities</Button>
+          <Button onClick={() => navigate("/activities")}>
+            Back to activities
+          </Button>
         </Box>
       </Grid>
 
       <Grid size={4}>
         <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
-          <Box sx={{ bgcolor: "primary.main", color: "white", p: 2, textAlign: "center" }}>
+          <Box
+            sx={{
+              bgcolor: "primary.main",
+              color: "white",
+              p: 2,
+              textAlign: "center",
+            }}
+          >
             <Typography variant="h6">
               {activity.attendees?.length ?? 0} people going
             </Typography>
           </Box>
           {activity.attendees?.map((attendee) => (
-            <Box key={attendee.id} sx={{ p: 2, display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              key={attendee.id}
+              sx={{ p: 2, display: "flex", alignItems: "center", gap: 2 }}
+            >
               <Avatar src={attendee.imageUrl} sx={{ width: 56, height: 56 }}>
                 <PersonIcon />
               </Avatar>

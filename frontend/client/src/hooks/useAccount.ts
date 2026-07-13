@@ -1,16 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ForgotPasswordSchema } from "../schemas/forgotPasswordSchema";
 import type { LoginSchema } from "../schemas/loginSchema";
 import type { RegisterSchema } from "../schemas/registerSchema";
 import {
   getCurrentUser,
-  getSessionInfo,
   loginWithCookies,
   logout,
-  requestPasswordReset,
   registerUser,
-  validateSession,
+  forgotPassword as forgotPasswordApi,
 } from "../api/agent";
+import type { ForgotPasswordSchema } from "../schemas/forgotPasswordSchema";
 
 export const useAccount = () => {
   const queryClient = useQueryClient();
@@ -24,22 +22,13 @@ export const useAccount = () => {
     }
   });
 
-  const validateUserSession = useMutation({
-    mutationFn: async () => {
-      return await validateSession();
-    }
-  });
-
   const registerAccount = useMutation({
     mutationFn: async (creds: RegisterSchema) => {
       return await registerUser(creds.email, creds.displayName, creds.password);
     },
-  });
-
-  const forgotPassword = useMutation({
-    mutationFn: async (payload: ForgotPasswordSchema) => {
-      return await requestPasswordReset(payload.email);
-    },
+    onSuccess: (user) => {
+      queryClient.setQueryData(['user'], user);
+    }
   });
 
   const logoutUser = useMutation({
@@ -51,28 +40,26 @@ export const useAccount = () => {
     }
   });
 
-  const getUserSession = useMutation({
-    mutationFn: async () => {
-      return await getSessionInfo();
-    }
-  });
-
   const { data: currentUser } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
       return await getCurrentUser();
     },
     retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const forgotPassword = useMutation({
+    mutationFn: async (creds: ForgotPasswordSchema) => {
+      return await forgotPasswordApi(creds.email);
+    },
   });
 
   return {
     loginUser,
     registerAccount,
-    forgotPassword,
-    validateUserSession,
     logoutUser,
-    getUserSession,
-    currentUser
+    currentUser,
+    forgotPassword
   };
 };

@@ -20,8 +20,8 @@ const eventTabs = ["Future Events", "Past Events", "Hosting"];
 
 export default function ProfilePage() {
   const { currentUser } = useAccount();
-  const [activities] = useActivities();
-  const [sideTab, setSideTab] = useState(2); // Events
+  const { activities } = useActivities({ pageSize: 100 });
+  const [sideTab, setSideTab] = useState(2);
   const [eventTab, setEventTab] = useState(0);
 
   const now = new Date();
@@ -30,16 +30,16 @@ export default function ProfilePage() {
     const date = new Date(activity.date);
     const isGoing = activity.attendees?.some((a) => a.id === currentUser.id);
     const isHost = activity.hostId === currentUser.id;
-    if (eventTab === 0) return isGoing && date >= now; // Future
-    if (eventTab === 1) return isGoing && date < now; // Past
-    return isHost; // Hosting
+    if (eventTab === 0) return isGoing && date >= now;
+    if (eventTab === 1) return isGoing && date < now;
+    return isHost;
   });
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Paper sx={{ p: 3, borderRadius: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <Avatar sx={{ width: 150, height: 150 }}>
+          <Avatar src={currentUser?.imageUrl} sx={{ width: 150, height: 150 }}>
             <PersonIcon sx={{ fontSize: 90 }} />
           </Avatar>
           <Typography variant="h3">
@@ -50,7 +50,10 @@ export default function ProfilePage() {
 
       <Paper sx={{ borderRadius: 2 }}>
         <Grid container>
-          <Grid size={3} sx={{ borderRight: "1px solid", borderColor: "divider" }}>
+          <Grid
+            size={3}
+            sx={{ borderRight: "1px solid", borderColor: "divider" }}
+          >
             <Tabs
               orientation="vertical"
               value={sideTab}
@@ -58,7 +61,11 @@ export default function ProfilePage() {
               sx={{ py: 2 }}
             >
               {sideTabs.map((label) => (
-                <Tab key={label} label={label} sx={{ alignItems: "flex-start" }} />
+                <Tab
+                  key={label}
+                  label={label}
+                  sx={{ alignItems: "flex-start" }}
+                />
               ))}
             </Tabs>
           </Grid>
@@ -83,19 +90,25 @@ export default function ProfilePage() {
                     </Typography>
                   )}
                   {filteredEvents.map((activity) => (
-                    <Card key={activity.id} sx={{ width: 180, borderRadius: 2 }}>
+                    <Card
+                      key={activity.id}
+                      sx={{ width: 180, borderRadius: 2 }}
+                    >
                       <CardMedia
                         component="img"
                         height="130"
-                        image="/images/categoryImages/culture.png"
+                        image={`/images/categoryImages/${activity.category.toLowerCase()}.png`}
                         alt={activity.title}
                       />
                       <CardContent sx={{ textAlign: "center" }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: "bold" }}
+                        >
                           {activity.title}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {new Date(activity.date).toLocaleString()}
+                          {new Date(activity.date).toLocaleDateString()}
                         </Typography>
                       </CardContent>
                     </Card>
