@@ -1,4 +1,5 @@
 import { Box, Button, Paper, Typography, TextField } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 import { LockOpen } from "@mui/icons-material";
 import React, { useState } from "react";
 import { useAccount } from "../../hooks/useAccount";
@@ -50,6 +51,7 @@ export default function LoginForm() {
   };
 
   return (
+    
     <Paper
       component="form"
       onSubmit={onSubmit}
@@ -105,6 +107,10 @@ export default function LoginForm() {
       >
         Login
       </Button>
+       <Typography sx={{ mt: 2, display: "flex", justifyContent: "center" }} variant="body2">
+         Mot de passe oublié ?  <RouterLink to="/forgot-password"> Ici </RouterLink> &nbsp;&nbsp;
+         Pas encore de compte ?  <RouterLink to="/register"> Créer un compte </RouterLink>
+        </Typography>
     </Paper>
   );
 }
