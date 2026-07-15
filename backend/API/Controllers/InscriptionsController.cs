@@ -6,29 +6,31 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
+// Contrôleur de gestion des inscriptions aux activités
+// Permet de s'inscrire, se désinscrire et consulter les participants
 public class InscriptionsController : BaseApiController
 {
-    /// <summary>
-    /// S'inscrire à une activité
-    /// </summary>
+    // POST: api/inscriptions?activityId={id}
+    // Inscrit l'utilisateur connecté à une activité - Route protégée (authentification requise)
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult> Register([FromQuery] string activityId)
     {
         return HandleResult(await Mediator.Send(new Register.Command { ActivityId = activityId }));
     }
 
-    /// <summary>
-    /// Annuler l'inscription à une activité
-    /// </summary>
+    // DELETE: api/inscriptions?activityId={id}
+    // Annule l'inscription de l'utilisateur à une activité - Route protégée (authentification requise)
+    // L'hôte ne peut pas se désinscrire (doit annuler l'activité)
+    [Authorize]
     [HttpDelete]
     public async Task<ActionResult> Unregister([FromQuery] string activityId)
     {
         return HandleResult(await Mediator.Send(new Unregister.Command { ActivityId = activityId }));
     }
 
-    /// <summary>
-    /// Liste des inscrits à une activité
-    /// </summary>
+    // GET: api/inscriptions?activityId={id}
+    // Récupère la liste des participants d'une activité - Route publique
     [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<List<AttendeeDto>>> GetAttendees([FromQuery] string activityId)

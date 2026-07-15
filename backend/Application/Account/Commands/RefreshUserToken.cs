@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Account.Commands;
 
+// Service de rafraîchissement du token JWT
+// Valide le refresh token et génère un nouveau JWT
+// Permet de prolonger la session sans redemander le mot de passe
 public class RefreshUserToken
 {
     public class Command : IRequest<Result<AccountAuthResult>>

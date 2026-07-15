@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Account.Commands;
 
+// Service de connexion utilisateur
+// Authentifie avec email et mot de passe
+// Retourne un token JWT et un refresh token après connexion réussie
 public class LoginUser
 {
     public class Command : IRequest<Result<AccountAuthResult>>

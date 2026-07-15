@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Account.Commands;
 
+// Service de réinitialisation de mot de passe
+// Initie le processus de récupération par email
+// Retourne toujours OK pour éviter l'énumération d'emails (sécurité)
 public class ForgotPassword
 {
     public class Command : IRequest<Result<Unit>>

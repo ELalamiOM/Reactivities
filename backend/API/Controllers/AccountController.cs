@@ -7,8 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
+    // Contrôleur de gestion des comptes utilisateurs
+    // Gère l'authentification, l'inscription, la déconnexion et la gestion des tokens
     public class AccountController : BaseApiController
     {
+        // POST: api/account/register
+        // Inscription d'un nouvel utilisateur - Route publique
+        // Crée un compte avec email, mot de passe et nom d'affichage
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> RegisterUser(RegisterDto registerDto)
@@ -17,6 +22,9 @@ namespace API.Controllers
             return HandleAuthResult(result);
         }
 
+        // POST: api/account/login
+        // Connexion d'un utilisateur existant - Route publique
+        // Authentifie avec email et mot de passe, retourne un token JWT
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
@@ -25,6 +33,9 @@ namespace API.Controllers
             return HandleAuthResult(result);
         }
 
+        // POST: api/account/refresh-token
+        // Rafraîchit le token JWT via le refresh token en cookie - Route publique
+        // Permet de prolonger la session sans redemander le mot de passe
         [AllowAnonymous]
         [HttpPost("refresh-token")]
         public async Task<ActionResult<UserDto>> RefreshToken()
@@ -38,6 +49,9 @@ namespace API.Controllers
             return HandleAuthResult(result);
         }
 
+        // GET: api/account/user-info
+        // Récupère les infos de l'utilisateur connecté - Route publique
+        // Retourne NoContent si non authentifié, utilisé au chargement de l'app
         [AllowAnonymous]
         [HttpGet("user-info")]
         public async Task<ActionResult<UserDto>> GetUserInfo()
@@ -54,7 +68,11 @@ namespace API.Controllers
             var result = await Mediator.Send(new GetCurrentUserInfo.Query { UserId = userId });
             return HandleAuthResult(result);
         }
-        
+
+        // POST: api/account/logout
+        // Déconnexion de l'utilisateur - Route protégée (authentification requise)
+        // Révoque le refresh token et supprime le cookie de session
+        [Authorize]
         [HttpPost("logout")]
         public async Task<ActionResult> Logout()
         {
@@ -74,6 +92,9 @@ namespace API.Controllers
             return NoContent();
         }
 
+        // POST: api/account/forgot-password
+        // Demande de réinitialisation du mot de passe - Route publique
+        // Retourne toujours OK pour éviter l'énumération d'emails (sécurité)
         [AllowAnonymous]
         [HttpPost("forgot-password")]
         public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)

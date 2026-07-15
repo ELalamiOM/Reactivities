@@ -8,6 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Account.Queries;
 
+// Service de récupération des informations utilisateur
+// Récupère les infos de l'utilisateur connecté par son ID
+// Utilisé au chargement de l'application pour vérifier la session
 public class GetCurrentUserInfo
 {
     public class Query : IRequest<Result<AccountAuthResult>>

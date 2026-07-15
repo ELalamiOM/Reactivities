@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Account.Commands;
 
+// Service de déconnexion utilisateur
+// Révoque le refresh token en base de données
+// Le cookie est supprimé côté contrôleur
 public class LogoutUser
 {
     public class Command : IRequest<Result<Unit>>

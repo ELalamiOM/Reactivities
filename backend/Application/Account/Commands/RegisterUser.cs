@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Account.Commands;
 
+// Service d'inscription d'un nouvel utilisateur
+// Crée un compte avec email, mot de passe et nom d'affichage
+// Retourne un token JWT et un refresh token après inscription réussie
 public class RegisterUser
 {
     public class Command : IRequest<Result<AccountAuthResult>>
