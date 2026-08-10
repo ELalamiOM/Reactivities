@@ -85,7 +85,7 @@ export default function ActivityDashboard() {
                 setPage(1);
               }}
             >
-              <ListItemText primary="Upcoming events" />
+              <ListItemText primary="I'm going" />
             </ListItemButton>
             <ListItemButton
               selected={activeFilter === "past"}
@@ -94,7 +94,7 @@ export default function ActivityDashboard() {
                 setPage(1);
               }}
             >
-              <ListItemText primary="Past events" />
+              <ListItemText primary="I'm hosting" />
             </ListItemButton>
           </List>
         </Paper>
