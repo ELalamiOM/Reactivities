@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,55 +11,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811142754_AddPriceToActivity")]
+    partial class AddPriceToActivity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
-
-            modelBuilder.Entity("AccountTransaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("ActivityId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ActivityId1")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("AttendanceId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("BalanceAfter")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("BalanceBefore")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("IdempotencyKey")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("ActivityId1");
-
-                    b.ToTable("AccountTransactions");
-                });
 
             modelBuilder.Entity("Domain.Entities.Activity", b =>
                 {
@@ -147,31 +107,6 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Photos");
-                });
-
-            modelBuilder.Entity("Domain.Entities.PrepaidAccount", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("TEXT");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsRequired()
-                        .HasColumnType("BLOB");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("PrepaidAccounts");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -381,23 +316,6 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("AccountTransaction", b =>
-                {
-                    b.HasOne("Domain.Entities.PrepaidAccount", "Account")
-                        .WithMany("Transactions")
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.Activity", "Activity")
-                        .WithMany()
-                        .HasForeignKey("ActivityId1");
-
-                    b.Navigation("Account");
-
-                    b.Navigation("Activity");
-                });
-
             modelBuilder.Entity("Domain.Entities.ActivityAttendee", b =>
                 {
                     b.HasOne("Domain.Entities.Activity", "Activity")
@@ -422,17 +340,6 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasOne("Domain.Entities.User", null)
                         .WithMany("Photos")
                         .HasForeignKey("UserId");
-                });
-
-            modelBuilder.Entity("Domain.Entities.PrepaidAccount", b =>
-                {
-                    b.HasOne("Domain.Entities.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Domain.Entities.PrepaidAccount", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -489,11 +396,6 @@ namespace Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.Activity", b =>
                 {
                     b.Navigation("Attendees");
-                });
-
-            modelBuilder.Entity("Domain.Entities.PrepaidAccount", b =>
-                {
-                    b.Navigation("Transactions");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>

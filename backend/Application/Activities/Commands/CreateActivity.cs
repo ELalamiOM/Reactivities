@@ -26,9 +26,10 @@ public class CreateActivity
         {
             logger.LogInformation("Creating new activity: {Title}", request.ActivityDto.Title);
             
+           // request.ActivityDto.Price = 100;
             var user = await userAccessor.GetUserAsync();
             logger.LogDebug("Activity created by user: {UserId}", user.Id);
-
+              
             var activity = mapper.Map<Activity>(request.ActivityDto);
 
             activity.Attendees.Add(new ActivityAttendee
@@ -38,6 +39,29 @@ public class CreateActivity
             });
 
             context.Activities.Add(activity);
+
+            var prepaidAccount = new PrepaidAccount
+{
+    Id = Guid.NewGuid(),
+    UserId = user.Id,
+    Balance = 100
+};
+
+             var initialTransaction = new AccountTransaction
+{
+    Id = Guid.NewGuid(),
+    AccountId = prepaidAccount.Id,
+    //Type = TransactionType.InitialCredit,
+    Amount = 100,
+    BalanceBefore = 0,
+    BalanceAfter = 100,
+    IdempotencyKey = $"initial-credit:{user.Id}",
+    CreatedAt = DateTime.UtcNow
+};
+
+          context.PrepaidAccounts.Add(prepaidAccount);
+           context.AccountTransactions.Add(initialTransaction);
+
 
             var result = await context.SaveChangesAsync(cancellationToken) > 0;
 

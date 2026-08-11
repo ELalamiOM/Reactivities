@@ -9,6 +9,8 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
     public required DbSet<Activity> Activities { get; set; }
     public required DbSet<ActivityAttendee> ActivityAttendees { get; set; }
     public required DbSet<Photo> Photos { get; set; }
+    public required DbSet<PrepaidAccount> PrepaidAccounts { get; set; }
+    public required DbSet<AccountTransaction> AccountTransactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -25,5 +27,16 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
             .HasOne(x => x.Activity)
             .WithMany(x => x.Attendees)
             .HasForeignKey(x => x.ActivityId);
+
+        builder.Entity<PrepaidAccount>()
+    .HasOne(x => x.User)
+    .WithOne()
+    .HasForeignKey<PrepaidAccount>(x => x.UserId);
+
+         builder.Entity<AccountTransaction>()
+    .HasOne(x => x.Account)
+    .WithMany(x => x.Transactions)
+    .HasForeignKey(x => x.AccountId);
+    
     }
 }
