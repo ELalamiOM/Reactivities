@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import agent from "../../../api/agent";
+import agent from "../api/agent";
 
 // extrait le message métier renvoyé par Result<T>.Failure
 function getApiError(error: unknown, fallback: string) {

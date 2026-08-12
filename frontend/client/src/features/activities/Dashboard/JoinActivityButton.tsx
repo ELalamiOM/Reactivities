@@ -1,9 +1,9 @@
 import { Alert, Box, Button, CircularProgress, Snackbar, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
-import { useAccount } from "../../hooks/useAccount";
-import { useCredits } from "../../hooks/useCredits";
-import { useInscriptions } from "../../hooks/useInscriptions";
-import { formatCredits, isFreeActivity } from "../../lib/types/credits";
+import { useAccount } from "../../../hooks/useAccount";
+import { useCredits } from "../../../hooks/useCredits";
+import { useInscriptions } from "../../../hooks/useInscriptions";
+import { formatCredits, isFreeActivity } from "../../../lib/types/credits";
 
 type Props = { activity: Activity };
 

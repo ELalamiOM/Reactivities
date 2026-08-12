@@ -8,6 +8,7 @@ import { Button } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import { useAccount } from "../../hooks/useAccount";
 import UserMenu from "./UserMenu";
+import CreditBalance from "./CreditBalance";
 
 export default function NavBar() {
   const { currentUser } = useAccount();
@@ -36,10 +37,7 @@ export default function NavBar() {
                 sx={{ display: "flex", gap: 2, color: "#eeeeee" }}
               >
                 <GroupIcon fontSize="large" />
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: "bold", fontSize: "2rem" }}
-                >
+                <Typography variant="h4" sx={{ fontWeight: "bold", fontSize: "2rem" }}>
                   Reactivities
                 </Typography>
               </Button>
@@ -49,12 +47,7 @@ export default function NavBar() {
               <Button
                 component={NavLink}
                 to="/activities"
-                sx={{
-                  fontSize: "1.2rem",
-                  textTransform: "uppercase",
-                  fontWeight: "bold",
-                  color: "#eeeeee",
-                }}
+                sx={{ fontSize: "1.2rem", textTransform: "uppercase", fontWeight: "bold", color: "#eeeeee" }}
               >
                 Activities
               </Button>
@@ -62,35 +55,25 @@ export default function NavBar() {
                 <Button
                   component={NavLink}
                   to="/createActivity"
-                  sx={{
-                    fontSize: "1.2rem",
-                    textTransform: "uppercase",
-                    fontWeight: "bold",
-                    color: "#eeeeee",
-                  }}
+                  sx={{ fontSize: "1.2rem", textTransform: "uppercase", fontWeight: "bold", color: "#eeeeee" }}
                 >
                   Create Activity
                 </Button>
               )}
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               {currentUser ? (
-                <UserMenu />
+                <>
+                  <CreditBalance />
+                  <UserMenu />
+                </>
               ) : (
                 <>
-                  <Button
-                    component={NavLink}
-                    to="/login"
-                    sx={{ color: "#eeeeee" }}
-                  >
+                  <Button component={NavLink} to="/login" sx={{ color: "#eeeeee" }}>
                     Login
                   </Button>
-                  <Button
-                    component={NavLink}
-                    to="/register"
-                    sx={{ color: "#eeeeee" }}
-                  >
+                  <Button component={NavLink} to="/register" sx={{ color: "#eeeeee" }}>
                     Register
                   </Button>
                 </>
