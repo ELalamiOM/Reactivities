@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Entities;
 
@@ -13,8 +14,7 @@ public class PrepaidAccount
 
     public decimal Balance { get; set; }
 
-    public byte[] RowVersion { get; set; } = [];
-
     public ICollection<AccountTransaction> Transactions { get; set; }
         = new List<AccountTransaction>();
+
 }

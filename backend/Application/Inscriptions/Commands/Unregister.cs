@@ -41,7 +41,13 @@ public class Unregister
 
             if (price > 0)
             {
-                var idempotencyKey = $"refund:{user.Id}:{activity.Id}";
+                 var attemptCount = await context.AccountTransactions
+    .CountAsync(x => x.ActivityId == activity.Id
+                  && x.Account.UserId == user.Id
+                  && x.Type == TransactionType.Refund, cancellationToken);
+
+                 var idempotencyKey = $"refund:{user.Id}:{activity.Id}:{attemptCount + 1}";
+             //   var idempotencyKey = $"refund:{user.Id}:{activity.Id}";
 
                 var existingTransaction = await context.AccountTransactions
                     .AnyAsync(x => x.IdempotencyKey == idempotencyKey, cancellationToken);

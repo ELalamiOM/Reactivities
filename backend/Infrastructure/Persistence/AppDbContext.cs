@@ -33,10 +33,6 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
             .WithOne()
             .HasForeignKey<PrepaidAccount>(x => x.UserId);
 
-        builder.Entity<PrepaidAccount>()
-            .Property(x => x.RowVersion)
-            .IsRowVersion();
-
         builder.Entity<AccountTransaction>()
             .HasOne(x => x.Account)
             .WithMany(x => x.Transactions)

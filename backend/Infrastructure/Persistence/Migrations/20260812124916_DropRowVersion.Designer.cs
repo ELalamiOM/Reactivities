@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Persistence.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260811151824_AddPrepaidAccountTransc")]
-    partial class AddPrepaidAccountTransc
+    [Migration("20260812124916_DropRowVersion")]
+    partial class DropRowVersion
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,7 +20,7 @@ namespace Infrastructure.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
-            modelBuilder.Entity("AccountTransaction", b =>
+            modelBuilder.Entity("Domain.Entities.AccountTransaction", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -29,16 +29,10 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<Guid>("AccountId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("ActivityId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ActivityId1")
+                    b.Property<string>("ActivityId")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("AttendanceId")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("BalanceAfter")
@@ -54,11 +48,18 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");
 
-                    b.HasIndex("ActivityId1");
+                    b.HasIndex("ActivityId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasFilter("[IdempotencyKey] <> ''");
 
                     b.ToTable("AccountTransactions");
                 });
@@ -160,10 +161,6 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.Property<decimal>("Balance")
                         .HasColumnType("TEXT");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsRequired()
-                        .HasColumnType("BLOB");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -384,7 +381,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("AccountTransaction", b =>
+            modelBuilder.Entity("Domain.Entities.AccountTransaction", b =>
                 {
                     b.HasOne("Domain.Entities.PrepaidAccount", "Account")
                         .WithMany("Transactions")
@@ -394,7 +391,7 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasOne("Domain.Entities.Activity", "Activity")
                         .WithMany()
-                        .HasForeignKey("ActivityId1");
+                        .HasForeignKey("ActivityId");
 
                     b.Navigation("Account");
 

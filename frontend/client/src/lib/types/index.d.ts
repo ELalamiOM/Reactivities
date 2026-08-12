@@ -12,6 +12,8 @@ type Activity = {
   latitude: number;
   longitude: number;
   price: number;
+  hostId: string;
+  hostDisplayName: string;
   attendees: Profile[];
 };
 
@@ -30,12 +32,18 @@ type User = {
   token: string;
 };
 
+
+//type PrepaidAccount = {
+ // balance: number;
+ // transactions: AccountTransaction[];
+// };
+
 type PrepaidAccount = {
+  id: string;
   balance: number;
-  transactions: AccountTransaction[];
 };
 
-type AccountTransaction = {
+/*type AccountTransaction = {
   id: string;
   type: string;
   amount: number;
@@ -43,5 +51,15 @@ type AccountTransaction = {
   balanceAfter: number;
   activityId?: string;
   activityTitle?: string;
+  createdAt: string;
+}; */
+
+type AccountTransaction = {
+  id: string;
+  type: "Debit" | "Refund" | "Credit";
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  activityId?: string;
   createdAt: string;
 };

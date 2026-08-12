@@ -15,6 +15,7 @@ import {
 import Place from "@mui/icons-material/Place";
 import { Link } from "react-router-dom";
 import { useAccount } from "../../../hooks/useAccount";
+import PriceChip from "../Dashboard/PriceChip"; // ajuste le chemin si besoin
 
 type Props = {
   activity: Activity;
@@ -51,7 +52,11 @@ export default function ActivityCard({ activity }: Props) {
             </>
           }
         />
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mr: 2 }}>
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mr: 2, alignItems: "flex-end" }}>
+          {/* 👇 badge prix en haut à droite */}
+          <PriceChip price={activity.price} />
+
           {(isHost || isGoing) && (
             <Chip label={label} color={color} sx={{ borderRadius: 2 }} />
           )}
@@ -69,6 +74,7 @@ export default function ActivityCard({ activity }: Props) {
           <Typography variant="body2">
             {new Date(activity.date).toLocaleDateString()}
           </Typography>
+
           <Place sx={{ ml: 3, mr: 1 }} />
           <Typography variant="body2">{activity.venue}</Typography>
         </Box>
@@ -83,6 +89,8 @@ export default function ActivityCard({ activity }: Props) {
           py: 2,
           pl: 3,
           alignItems: "center",
+          justifyContent: "space-between",
+          pr: 3,
         }}
       >
         <AvatarGroup max={5}>
@@ -96,6 +104,13 @@ export default function ActivityCard({ activity }: Props) {
             </Avatar>
           ))}
         </AvatarGroup>
+
+        {/* 👇 rappel du coût de participation près des participants */}
+        <Typography variant="caption" color="text.secondary">
+          {activity.price > 0
+            ? `Participation : ${activity.price} crédits`
+            : "Participation gratuite"}
+        </Typography>
       </Box>
 
       <CardActions sx={{ pb: 2, justifyContent: "space-between" }}>
