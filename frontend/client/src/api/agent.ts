@@ -148,4 +148,9 @@ export const forgotPassword = async (email: string) => {
   await agent.post('/api/account/forgot-password', { email });
 };
 
+export const getPrepaidAccount = async (): Promise<PrepaidAccount> => {
+  const response = await agent.get<PrepaidAccount>('/api/prepaidaccount');
+  return response.data;
+};
+
 export default agent;

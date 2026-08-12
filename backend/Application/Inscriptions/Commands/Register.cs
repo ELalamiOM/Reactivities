@@ -37,6 +37,44 @@ public class Register
             if (existingAttendance != null)
                 return Result<Unit>.Failure("Vous êtes déjà inscrit à cette activité", 400);
 
+            var price = activity.Price ?? 0;
+
+            if (price > 0)
+            {
+                var idempotencyKey = $"debit:{user.Id}:{activity.Id}";
+
+                var existingTransaction = await context.AccountTransactions
+                    .AnyAsync(x => x.IdempotencyKey == idempotencyKey, cancellationToken);
+
+                if (existingTransaction)
+                    return Result<Unit>.Failure("Cette inscription a déjà été traitée", 400);
+
+                var account = await context.PrepaidAccounts
+                    .FirstOrDefaultAsync(x => x.UserId == user.Id, cancellationToken);
+
+                if (account == null)
+                    return Result<Unit>.Failure("Compte prépayé introuvable", 400);
+
+                if (account.Balance < price)
+                    return Result<Unit>.Failure("Solde insuffisant", 400);
+
+                var balanceBefore = account.Balance;
+                account.Balance -= price;
+
+                context.AccountTransactions.Add(new AccountTransaction
+                {
+                    Id = Guid.NewGuid(),
+                    AccountId = account.Id,
+                    Type = TransactionType.Debit,
+                    Amount = -price,
+                    BalanceBefore = balanceBefore,
+                    BalanceAfter = account.Balance,
+                    ActivityId = activity.Id,
+                    IdempotencyKey = idempotencyKey,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
             activity.Attendees.Add(new ActivityAttendee
             {
                 UserId = user.Id,
@@ -45,11 +83,18 @@ public class Register
                 DateJoined = DateTime.UtcNow
             });
 
-            var result = await context.SaveChangesAsync(cancellationToken) > 0;
+            try
+            {
+                var result = await context.SaveChangesAsync(cancellationToken) > 0;
 
-            return result
-                ? Result<Unit>.Success(Unit.Value)
-                : Result<Unit>.Failure("Problème lors de l'inscription", 400);
+                return result
+                    ? Result<Unit>.Success(Unit.Value)
+                    : Result<Unit>.Failure("Problème lors de l'inscription", 400);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result<Unit>.Failure("Conflit de concurrence. Veuillez réessayer.", 400);
+            }
         }
     }
 }

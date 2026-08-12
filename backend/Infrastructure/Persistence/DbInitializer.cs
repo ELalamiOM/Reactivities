@@ -24,7 +24,29 @@ namespace Infrastructure.Persistence
                 foreach(var user in users)
                 {
                     await userManager.CreateAsync(user,"Pa$$w0rd");
+
+                    var prepaidAccount = new PrepaidAccount
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        Balance = 100
+                    };
+
+                    context.PrepaidAccounts.Add(prepaidAccount);
+                    context.AccountTransactions.Add(new AccountTransaction
+                    {
+                        Id = Guid.NewGuid(),
+                        AccountId = prepaidAccount.Id,
+                        Type = TransactionType.InitialCredit,
+                        Amount = 100,
+                        BalanceBefore = 0,
+                        BalanceAfter = 100,
+                        IdempotencyKey = $"initial-credit:{user.Id}",
+                        CreatedAt = DateTime.UtcNow
+                    });
                 }
+
+                await context.SaveChangesAsync();
             }
             if (context.Activities.Any()) return;
 

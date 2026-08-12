@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
-using  Domain.Entities;
+
+namespace Domain.Entities;
 
 public class AccountTransaction
 {
@@ -10,7 +10,7 @@ public class AccountTransaction
 
     public PrepaidAccount Account { get; set; } = null!;
 
-    //public TransactionType Type { get; set; }
+    public TransactionType Type { get; set; }
 
     public decimal Amount { get; set; }
 
@@ -18,11 +18,9 @@ public class AccountTransaction
 
     public decimal BalanceAfter { get; set; }
 
-    public Guid? ActivityId { get; set; }
+    public string? ActivityId { get; set; }
 
     public Activity? Activity { get; set; }
-
-    public Guid? AttendanceId { get; set; }
 
     public string IdempotencyKey { get; set; } = string.Empty;
 

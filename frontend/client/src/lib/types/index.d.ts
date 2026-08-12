@@ -11,6 +11,7 @@ type Activity = {
   venue: string;
   latitude: number;
   longitude: number;
+  price: number;
   attendees: Profile[];
 };
 
@@ -27,4 +28,20 @@ type User = {
   displayName: string;
   imageUrl?: string;
   token: string;
+};
+
+type PrepaidAccount = {
+  balance: number;
+  transactions: AccountTransaction[];
+};
+
+type AccountTransaction = {
+  id: string;
+  type: string;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  activityId?: string;
+  activityTitle?: string;
+  createdAt: string;
 };

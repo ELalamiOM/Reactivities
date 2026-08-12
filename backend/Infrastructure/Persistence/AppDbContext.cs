@@ -29,14 +29,22 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
             .HasForeignKey(x => x.ActivityId);
 
         builder.Entity<PrepaidAccount>()
-    .HasOne(x => x.User)
-    .WithOne()
-    .HasForeignKey<PrepaidAccount>(x => x.UserId);
+            .HasOne(x => x.User)
+            .WithOne()
+            .HasForeignKey<PrepaidAccount>(x => x.UserId);
 
-         builder.Entity<AccountTransaction>()
-    .HasOne(x => x.Account)
-    .WithMany(x => x.Transactions)
-    .HasForeignKey(x => x.AccountId);
-    
+        builder.Entity<PrepaidAccount>()
+            .Property(x => x.RowVersion)
+            .IsRowVersion();
+
+        builder.Entity<AccountTransaction>()
+            .HasOne(x => x.Account)
+            .WithMany(x => x.Transactions)
+            .HasForeignKey(x => x.AccountId);
+
+        builder.Entity<AccountTransaction>()
+            .HasIndex(x => x.IdempotencyKey)
+            .IsUnique()
+            .HasFilter("[IdempotencyKey] <> ''");
     }
 }

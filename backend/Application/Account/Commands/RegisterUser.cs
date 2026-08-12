@@ -3,15 +3,13 @@ using Application.Account.DTOs;
 using Application.Core;
 using Application.Interfaces;
 using Domain.Entities;
+using Infrastructure.Persistence;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace Application.Account.Commands;
 
-// Service d'inscription d'un nouvel utilisateur
-// Crée un compte avec email, mot de passe et nom d'affichage
-// Retourne un token JWT et un refresh token après inscription réussie
 public class RegisterUser
 {
     public class Command : IRequest<Result<AccountAuthResult>>
@@ -22,6 +20,7 @@ public class RegisterUser
     public class Handler(
         SignInManager<User> signInManager,
         ITokenService tokenService,
+        AppDbContext context,
         ILogger<Handler> logger)
         : IRequestHandler<Command, Result<AccountAuthResult>>
     {
@@ -44,6 +43,29 @@ public class RegisterUser
                 logger.LogWarning("Registration failed for email: {Email}, Errors: {Errors}", request.RegisterDto.Email, errors);
                 return Result<AccountAuthResult>.Failure(errors, 400);
             }
+
+            var prepaidAccount = new PrepaidAccount
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Balance = 100
+            };
+
+            var initialTransaction = new AccountTransaction
+            {
+                Id = Guid.NewGuid(),
+                AccountId = prepaidAccount.Id,
+                Type = TransactionType.InitialCredit,
+                Amount = 100,
+                BalanceBefore = 0,
+                BalanceAfter = 100,
+                IdempotencyKey = $"initial-credit:{user.Id}",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            context.PrepaidAccounts.Add(prepaidAccount);
+            context.AccountTransactions.Add(initialTransaction);
+            await context.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation("User registered successfully: {Email}, UserId: {UserId}", request.RegisterDto.Email, user.Id);
             return await AccountAuthHelper.CreateAndPersistUserAuthAsync(
