@@ -36,11 +36,12 @@ export const useAccount = () => {
       return await logout();
     },
     onSuccess: () => {
+      queryClient.removeQueries();
       queryClient.setQueryData(['user'], null);
     }
   });
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isLoading: loadingUserInfo } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
       return await getCurrentUser();
@@ -60,6 +61,7 @@ export const useAccount = () => {
     registerAccount,
     logoutUser,
     currentUser,
+    loadingUserInfo,
     forgotPassword
   };
 };

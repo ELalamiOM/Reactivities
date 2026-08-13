@@ -10,6 +10,7 @@ import ProfilePage from "../../features/profiles/ProfilePage";
 import NotFound from "../../features/errors/NotFound";
 import ServerError from "../../features/errors/ServerError";
 import ForgotPasswordForm from "../../features/account/ForgotPasswordForm";
+import RequireAuth from "./RequireAuth";
 
 export const router = createBrowserRouter([
   {
@@ -17,17 +18,22 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       { path: "", element: <HomePage /> },
-      { path: "activities", element: <ActivityDashboard /> },
-      { path: "activities/:id", element: <ActivityDetailPage /> },
-      { path: "createActivity", element: <ActivityForm key="create" /> },
-      { path: "manage/:id", element: <ActivityForm key="edit" /> },
+      {
+        element: <RequireAuth />,
+        children: [
+          { path: "activities", element: <ActivityDashboard /> },
+          { path: "activities/:id", element: <ActivityDetailPage /> },
+          { path: "createActivity", element: <ActivityForm key="create" /> },
+          { path: "manage/:id", element: <ActivityForm key="edit" /> },
+          { path: "profile", element: <ProfilePage /> },
+        ],
+      },
       { path: "login", element: <LoginForm /> },
       { path: "register", element: <RegisterForm /> },
-      { path: "profile", element: <ProfilePage /> },
       { path: "not-found", element: <NotFound /> },
       { path: "server-error", element: <ServerError /> },
       { path: "*", element: <Navigate replace to="/not-found" /> },
-      { path: "forgot-password", element:<ForgotPasswordForm /> }
+      { path: "forgot-password", element: <ForgotPasswordForm /> },
     ],
   },
 ]);

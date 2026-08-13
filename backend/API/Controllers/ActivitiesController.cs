@@ -19,13 +19,15 @@ namespace API.Controllers
         public async Task<ActionResult<List<ActivityDto>>> GetActivities(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] string? filter = null)
+            [FromQuery] string? filter = null,
+            [FromQuery] string? sort = null)
         {
             var result = await Mediator.Send(new GetActivityList.Query
             {
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Filter = filter
+                Filter = filter,
+                Sort = sort
             });
             return HandleResult(result);
         }

@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import agent from "../../../api/agent";
 import { useAccount } from "../../../hooks/useAccount";
+import PriceChip from "../Dashboard/PriceChip";
 
 export default function ActivityDetailPage() {
   const { id } = useParams();
@@ -41,6 +42,7 @@ export default function ActivityDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity", id] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["credits"] });
     },
   });
 
@@ -95,6 +97,9 @@ export default function ActivityDetailPage() {
               <Typography variant="h6">
                 Hosted by <b>{activity.hostDisplayName}</b>
               </Typography>
+              <Box sx={{ mt: 1 }}>
+                <PriceChip price={activity.price ?? 0} size="medium" />
+              </Box>
             </Box>
             <Box
               sx={{

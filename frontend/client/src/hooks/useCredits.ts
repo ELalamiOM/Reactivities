@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import agent from "../../../api/agent";
+import agent from "../api/agent";
 import { useAccount } from "./useAccount";
 
 export function useCredits() {
   const { currentUser } = useAccount();
 
   const { data: account, isPending } = useQuery({
-    queryKey: ["credits"],
+    queryKey: ["credits", currentUser?.id],
     queryFn: async () => {
-      const response = await agent.get<PrepaidAccount>("/api/accounts/me");
+      const response = await agent.get<PrepaidAccount>("/api/prepaidaccount");
       return response.data;
     },
     enabled: !!currentUser, // pas d'appel si non connecté

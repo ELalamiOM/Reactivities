@@ -71,9 +71,19 @@ agent.interceptors.response.use(
       }
     }
 
+    // Extrait le message renvoyé par le backend (string brute ou ProblemDetails)
+    const serverMessage = (fallback: string): string => {
+      if (typeof data === 'string' && data.trim()) return data;
+      if (data && typeof data === 'object') {
+        const d = data as { detail?: string; title?: string; message?: string };
+        return d.detail || d.title || d.message || fallback;
+      }
+      return fallback;
+    };
+
     switch (status) {
       case 400:
-        if ((data as { errors?: Record<string, string[]> }).errors) {
+        if (data && typeof data === 'object' && (data as { errors?: Record<string, string[]> }).errors) {
           const modelStateErrors: string[] = [];
           const errors = (data as { errors: Record<string, string[]> }).errors;
           for (const key in errors) {
@@ -83,13 +93,13 @@ agent.interceptors.response.use(
           }
           throw modelStateErrors;
         }
-        toast.error('Bad request');
+        toast.error(serverMessage('Requête invalide'));
         break;
       case 401:
-        toast.error('Unauthorized');
+        toast.error(serverMessage('Session expirée, veuillez vous reconnecter'));
         break;
       case 403:
-        toast.error('Forbidden');
+        toast.error(serverMessage('Accès refusé'));
         break;
       case 404:
         router.navigate('/not-found');
@@ -98,6 +108,7 @@ agent.interceptors.response.use(
         router.navigate('/server-error');
         break;
       default:
+        toast.error(serverMessage('Une erreur est survenue'));
         break;
     }
 

@@ -33,14 +33,14 @@ public class LoginUser
             if (user == null)
             {
                 logger.LogWarning("Login failed - user not found: {Email}", request.LoginDto.Email);
-                return Result<AccountAuthResult>.Failure("Invalid email or password", 401);
+                return Result<AccountAuthResult>.Failure("Email ou mot de passe incorrect", 401);
             }
 
             var signInResult = await signInManager.CheckPasswordSignInAsync(user, request.LoginDto.Password, false);
             if (!signInResult.Succeeded)
             {
                 logger.LogWarning("Login failed - invalid password for user: {Email}", request.LoginDto.Email);
-                return Result<AccountAuthResult>.Failure("Invalid email or password", 401);
+                return Result<AccountAuthResult>.Failure("Email ou mot de passe incorrect", 401);
             }
 
             logger.LogInformation("User logged in successfully: {Email}, UserId: {UserId}", request.LoginDto.Email, user.Id);

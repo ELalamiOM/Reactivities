@@ -13,22 +13,25 @@ type UseActivitiesParams = {
   pageNumber?: number;
   pageSize?: number;
   filter?: string;
+  sort?: string;
 };
 
 export function useActivities({
   pageNumber = 1,
   pageSize = 10,
   filter,
+  sort,
 }: UseActivitiesParams = {}) {
   const queryClient = useQueryClient();
 
   const { data, isPending } = useQuery({
-    queryKey: ["activities", pageNumber, pageSize, filter],
+    queryKey: ["activities", pageNumber, pageSize, filter, sort],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("pageNumber", pageNumber.toString());
       params.append("pageSize", pageSize.toString());
       if (filter) params.append("filter", filter);
+      if (sort) params.append("sort", sort);
       const response = await agent.get<PagedResult<Activity>>(
         `/api/activities?${params}`,
       );

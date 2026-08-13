@@ -16,6 +16,7 @@ public class GetActivityList
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public string? Filter { get; set; }
+        public string? Sort { get; set; }
     }
 
     public class Handler(AppDbContext context, IMapper mapper, ILogger<Handler> logger)
@@ -23,11 +24,10 @@ public class GetActivityList
     {
         public async Task<Result<PagedList<ActivityDto>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Fetching activities - Page: {PageNumber}, Size: {PageSize}, Filter: {Filter}", 
-                request.PageNumber, request.PageSize, request.Filter ?? "none");
+            logger.LogInformation("Fetching activities - Page: {PageNumber}, Size: {PageSize}, Filter: {Filter}, Sort: {Sort}", 
+                request.PageNumber, request.PageSize, request.Filter ?? "none", request.Sort ?? "date");
             
             var query = context.Activities
-                .OrderByDescending(x => x.Date)
                 .ProjectTo<ActivityDto>(mapper.ConfigurationProvider)
                 .AsQueryable();
 
@@ -35,6 +35,16 @@ public class GetActivityList
                 query = query.Where(x => x.Date >= DateTime.UtcNow);
             else if (request.Filter == "past")
                 query = query.Where(x => x.Date < DateTime.UtcNow);
+
+            // Tri par défaut: par date (du plus proche au plus lointain)
+            query = request.Sort switch
+            {
+                "dateDesc" => query.OrderByDescending(x => x.Date),
+                "priceAsc" => query.OrderBy(x => x.Price).ThenBy(x => x.Date),
+                "priceDesc" => query.OrderByDescending(x => x.Price).ThenBy(x => x.Date),
+                "title" => query.OrderBy(x => x.Title),
+                _ => query.OrderBy(x => x.Date),
+            };
 
             var totalCount = await query.CountAsync(cancellationToken);
             var items = await query

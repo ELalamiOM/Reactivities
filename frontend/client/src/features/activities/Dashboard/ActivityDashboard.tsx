@@ -1,13 +1,17 @@
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import SortIcon from "@mui/icons-material/Sort";
 import {
   Box,
+  FormControl,
   Grid,
   List,
   ListItemButton,
   ListItemText,
+  MenuItem,
   Pagination,
   Paper,
+  Select,
   Typography,
 } from "@mui/material";
 import { useState } from "react";
@@ -19,9 +23,19 @@ import ActivityList from "./ActivityList";
 import { useActivities } from "../../../hooks/useActivities";
 
 type ActivityFilter = "all" | "upcoming" | "past";
+type ActivitySort = "date" | "dateDesc" | "priceAsc" | "priceDesc" | "title";
+
+const sortOptions: { value: ActivitySort; label: string }[] = [
+  { value: "date", label: "Date (soonest first)" },
+  { value: "dateDesc", label: "Date (latest first)" },
+  { value: "priceAsc", label: "Price (low to high)" },
+  { value: "priceDesc", label: "Price (high to low)" },
+  { value: "title", label: "Title (A-Z)" },
+];
 
 export default function ActivityDashboard() {
   const [activeFilter, setActiveFilter] = useState<ActivityFilter>("all");
+  const [sort, setSort] = useState<ActivitySort>("date");
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [page, setPage] = useState(1);
 
@@ -30,6 +44,7 @@ export default function ActivityDashboard() {
     pageNumber: page,
     pageSize: 10,
     filter: serverFilter,
+    sort,
   });
 
   const filteredActivities = selectedDate
@@ -47,7 +62,7 @@ export default function ActivityDashboard() {
     <Grid container spacing={3}>
       <Grid size={8}>
         <ActivityList activities={filteredActivities} isPending={isPending} />
-        {totalPages > 1 && (
+        {totalPages > 1 && !selectedDate && filteredActivities.length > 0 && (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
             <Pagination
               count={totalPages}
@@ -97,6 +112,32 @@ export default function ActivityDashboard() {
               <ListItemText primary="I'm hosting" />
             </ListItemButton>
           </List>
+        </Paper>
+
+        <Paper sx={{ p: 2, borderRadius: 3, mb: 3 }}>
+          <Typography
+            variant="h5"
+            color="primary"
+            sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+          >
+            <SortIcon />
+            Sort by
+          </Typography>
+          <FormControl fullWidth size="small">
+            <Select
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value as ActivitySort);
+                setPage(1);
+              }}
+            >
+              {sortOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Paper>
 
         <Paper sx={{ p: 2, borderRadius: 3 }}>

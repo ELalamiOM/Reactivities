@@ -3,12 +3,16 @@ import { Link as RouterLink } from "react-router-dom";
 import { LockOpen } from "@mui/icons-material";
 import React, { useState } from "react";
 import { useAccount } from "../../hooks/useAccount";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { loginSchema, type LoginSchema } from "../../schemas/loginSchema";
 
 export default function LoginForm() {
   const { loginUser } = useAccount();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from =
+    (location.state as { from?: Location } | null)?.from?.pathname ??
+    "/activities";
 
   const [values, setValues] = useState<LoginSchema>({
     email: "",
@@ -47,11 +51,10 @@ export default function LoginForm() {
     e.preventDefault();
     if (!validate()) return;
     await loginUser.mutateAsync(values);
-    navigate("/activities");
+    navigate(from);
   };
 
   return (
-    
     <Paper
       component="form"
       onSubmit={onSubmit}
@@ -107,10 +110,15 @@ export default function LoginForm() {
       >
         Login
       </Button>
-       <Typography sx={{ mt: 2, display: "flex", justifyContent: "center" }} variant="body2">
-         Mot de passe oublié ?  <RouterLink to="/forgot-password"> Ici </RouterLink> &nbsp;&nbsp;
-         Pas encore de compte ?  <RouterLink to="/register"> Créer un compte </RouterLink>
-        </Typography>
+      <Typography
+        sx={{ mt: 2, display: "flex", justifyContent: "center" }}
+        variant="body2"
+      >
+        Mot de passe oublié ?{" "}
+        <RouterLink to="/forgot-password"> Ici </RouterLink> &nbsp;&nbsp; Pas
+        encore de compte ?{" "}
+        <RouterLink to="/register"> Créer un compte </RouterLink>
+      </Typography>
     </Paper>
   );
 }
